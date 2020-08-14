@@ -39,13 +39,13 @@ class SchwulBot {
 			const isNsfw      = args.find(a => a == 'nsfw') ?
 			true : false;
 
-			if (command == 'upload') {
+			/* if (command == 'upload') {
 				this.upload({
 					attachments: attachments,
 					category: category,
 					isNsfw: isNsfw
 				});
-			} else if (command == 'get') {
+			} else  */if (command == 'get') {
 				this.getObject(message, {
 					category: category,
 					isNsfw: isNsfw,
