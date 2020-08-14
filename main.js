@@ -13,6 +13,15 @@ class SchwulBot {
 
 	}
 
+	colors = [
+		0xE50000,
+		0xFF8D00,
+		0xFFEE00,
+		0x008121,
+		0x004CFF,
+		0x760188
+	]
+
 	s3 = new AWS.S3();
 
 	parse(message) {
@@ -145,10 +154,11 @@ class SchwulBot {
 
 		const random_line = cache[Math.floor(Math.random() * cache.length)];
 
-		this.s3.getObject({
+		this.s3.getSignedUrlPromise('getObject',
+		{
 			Bucket: "schwulbot",
 			Key: random_line.toString()
-		}, (err, data) => {
+		}/* , (err, data) => {
 			if (err) {
 				console.log(err.stack);
 				return;
@@ -156,9 +166,23 @@ class SchwulBot {
 
 			const file_type = data.ContentType.replace("image/", "");
 			const att = new Discord.MessageAttachment(data.Body, `idk.${file_type}`);
-			message.channel.send(att);
+			//message.channel.send(att);
+			this.make_embed({
+				type: 'normal',
+				file: data.Body
+			});
 
 			message.channel.stopTyping();
+		} */).then(url => {
+			const u = url.substring(0, url.indexOf('AWSAccessKeyId') - 1).trim();
+			this.make_embed({
+				type: 'normal',
+				file: u,
+				message: message,
+				path: path
+			});
+		}).catch(err => {
+			console.log(err);
 		});
 	}
 
@@ -175,6 +199,37 @@ class SchwulBot {
 			return 'jpg'
 		} else if (file.name.includes('.gif')) {
 			return 'gif'
+		}
+	}
+
+
+	make_embed(options) {
+		const type    = options["type"];
+		const color   = this.colors[Math.floor(Math.random() * this.colors.length)];
+		const file    = options["file"];
+		const message = options["message"];
+		const path    = options["path"].substring(8, options["path"].length - 10);
+
+		if (type == 'normal') {
+			const embed = {
+				author: {
+					name: client.user.username,
+					icon_url: client.user.displayAvatarURL()
+				},
+				title: path,
+				url: file,
+				color: color,
+				image: {
+					url: file
+				},
+				footer: {
+					text: `Requested by: ${message.author.username}`,
+					icon_url: message.author.displayAvatarURL()
+				}
+			}
+
+			message.channel.send({embed: embed});
+			message.channel.stopTyping();
 		}
 	}
 }
