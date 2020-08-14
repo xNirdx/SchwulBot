@@ -89,9 +89,17 @@ class SchwulBot {
 									return;
 								}
 							});
-						});
 
-						return filename;
+							const cache_path = `./cache/${bucket_path.replace("schwulbot/", "")}/cache.txt`;
+
+							fs.appendFile(
+								cache_path,
+								`\n${bucket_path.replace("schwulbot/", "")}/${attachment.name}`, 
+								(err) => {
+									if (err) console.log(err);
+								}
+							);
+						});
 					}).catch(err => {
 						console.log(err);
 					});
