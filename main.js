@@ -188,6 +188,8 @@ client.once('ready', () => {
 		status: 'online'
 	});
 
+	console.log(SB.s3.config.credentials.accessKeyId);
+
 	// clear temp file storage every 5 minutes (300000 ms)
 	setInterval(() => {
 		fs.readdir('./temp', (err, files) => {
