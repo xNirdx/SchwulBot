@@ -188,12 +188,7 @@ client.once('ready', () => {
 		status: 'online'
 	});
 
-	SB.s3.config.getCredentials((err) => {
-		if (err) console.log(err);
-		else {
-			console.log(SB.s3.config.credentials);
-		}
-	});
+	console.log(SB.s3);
 
 	// clear temp file storage every 5 minutes (300000 ms)
 	setInterval(() => {
