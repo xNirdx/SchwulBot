@@ -1,5 +1,2 @@
-/cache
 /temp
-/node_modules
-config.json
-config.env
+/upload
