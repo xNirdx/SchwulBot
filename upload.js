@@ -1,63 +1,79 @@
-require('dotenv').config({ path: './upload-config.env' });
-
 // requires
 const AWS = require('aws-sdk');
 const fs = require('fs');
 
-// paths to folders
-const gay     = process.env.GAY_DIR;
-const lesbian = process.env.LESBIAN_DIR;
+const settings = {
+    category: (process.argv[2] ? process.argv[2] : 'all'),
+    num_categories: 2
+}
 
-// read directories
-console.log("Reading directories...");
+const s3 = new AWS.S3();
 
 function upload(options) {
-    const bucket = '';
-    const object = options['object'];
-    const type   = getFileType(object);
+    const params = {
+        Body: options.fileData,
+        Bucket: 'schwulbot',
+        Key: `${options.key}/${options.file}`,
+        ContentType: `image/${getFileType(options.file)}`,
+        ACL: 'public-read'
+    }
 
-    fs.readFile(options['path'], (err, data) => {
+    s3.putObject(params, (err, data) => {
         if (err) console.log(err);
-        else console.log(data);
+        console.log(data);
     });
 }
 
-function getFileType(object) {
-    const gif = object.includes('.gif') ? 'gif' : false;
-    const jpg = object.includes('.jpg') ? 'jpg' : false;
-    const png = object.includes('.png') ? 'png' : false;
+function getFileType(file) {
+    const gif = (file.includes('.gif') ? 'gif' : false);
+    const jpg = (file.includes('.jpg') ? 'jpg' : false);
+    const png = (file.includes('.png') ? 'png' : false);
 
     return gif || jpg || png;
 }
 
-fs.readdir(gay, (err, files) => {
-    const hasNsfw = files.find(file => file == 'nsfw');
-    const hasSfw  = files.find(file => file == 'sfw');
+function gifOrPic(file) {
+    if (getFileType(file) == 'gif') {
+        return 'gif';
+    } else {
+        return 'pic';
+    }
+}
 
-    // does the folder have nsfw and sfw subfolders?
-    if (hasNsfw != undefined && hasSfw != undefined) {
-        // it does, continue
+function getFiles(dir) {
+    fs.readdir(dir, (err, ratings) => {
+        if (err) console.log(err);
 
-        // read each subfolder (nsfw and sfw folders)
-        for (let i = 0; i < files.length; i++) {
-            const pwd = `${gay}/${files[i]}`;
+        for (let rating of ratings) {
+            const type = (rating == 'nsfw') ? 'nsfw-' : '';
 
-            // get files
-            fs.readdir(pwd, (err, objects) => {
+            fs.readdir(`${dir}/${rating}`, (err, files) => {
                 if (err) console.log(err);
                 
-                for (let j = 0; j < objects.length; j++) {
-                    const type = getFileType(objects[j]);
+                for (let file of files) {
+                    fs.readFile(`${dir}/${rating}/${file}`, (err, fileData) => {
+                        if (err) console.log(err);
 
-                    upload({
-                        object: objects[j],
-                        path: `${gay}/${files[i]}/${objects[j]}`
+                        upload({
+                            file: file,
+                            fileData: fileData,
+                            key: `${type}${gifOrPic(file)}-${settings.category}`
+                        });
+
+                        fs.appendFile(`./cache/${type}${gifOrPic(file)}-${settings.category}/cache.txt`, `\n${type}${gifOrPic(file)}-${settings.category}/${file}`, (err) => {
+                            if (err) console.log(err);
+                        });
                     });
                 }
             });
         }
-    } else {
-        // it does not, do not continue
-        console.log("Subfolders [nsfw] and [sfw] are missing!");
-    }
-});
+    });
+}
+
+if (settings.category != 'all') {
+    // if a category is explicitly given, get the files from it
+    getFiles(`./upload/${settings.category}`);
+} else {
+    // no category was provided
+    console.warn("Please provide a category.");
+}

@@ -118,8 +118,6 @@ class SchwulBot {
 	}
 
 	async getObject(message, args) {
-		message.channel.startTyping();
-
 		const nsfw     = args["isNsfw"];
 		const category = args["category"];
 		const type     = (args["args"].find(a => a == "gif")) ? "gif" : "pic";
@@ -229,7 +227,6 @@ class SchwulBot {
 			}
 
 			message.channel.send({embed: embed});
-			message.channel.stopTyping();
 		}
 	}
 }
