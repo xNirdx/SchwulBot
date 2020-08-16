@@ -55,68 +55,6 @@ class SchwulBot {
 		}
 	}
 
-	async upload(args) {
-		const attachments = args["attachments"];
-		const category    = args["category"];
-		const isNsfw      = args["isNsfw"];
-		const fileType    = this.getFileType(attachments.first());
-		
-		let bucket_path = "schwulbot";
-		
-			if (isNsfw) {
-				if (fileType == 'gif') {
-					bucket_path += `/nsfw-gif-${category}`;
-				} else {
-					bucket_path += `/nsfw-pic-${category}`
-				}
-			} else {
-				if (fileType == 'gif') {
-					bucket_path += `/gif-${category}`
-				} else {
-					bucket_path += `/pic-${category}`
-				}
-			}
-		
-		if (attachments.size > 0) {
-			if (attachments.every(a => this.isValidFileType(a))) {
-				attachments.each(attachment => {
-					download.image({
-						url: attachment.url,
-						dest: './temp'
-					}).then(({filename}) => {
-						fs.readFile(filename.toString(), (err, data) => {
-							// upload file to s3
-							this.s3.putObject({
-								Bucket: bucket_path,
-								Key: attachment.name,
-								Body: data,
-								ContentType: `image/${this.getFileType(attachment)}`,
-								ACL: "public-read"
-							}, (err, data) => {
-								if (err) {
-									console.log(err.stack);
-									return;
-								}
-							});
-
-							const cache_path = `./cache/${bucket_path.replace("schwulbot/", "")}/cache.txt`;
-
-							fs.appendFile(
-								cache_path,
-								`\n${bucket_path.replace("schwulbot/", "")}/${attachment.name}`, 
-								(err) => {
-									if (err) console.log(err);
-								}
-							);
-						});
-					}).catch(err => {
-						console.log(err);
-					});
-				});
-			}
-		}
-	}
-
 	async getObject(message, args) {
 		const nsfw     = args["isNsfw"];
 		const category = args["category"];
@@ -215,6 +153,7 @@ class SchwulBot {
 					icon_url: client.user.displayAvatarURL()
 				},
 				title: path,
+				description: 'Not working? Click the link above.',
 				url: file,
 				color: color,
 				image: {
